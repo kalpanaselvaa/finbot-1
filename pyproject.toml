@@ -26,3 +26,8 @@ dependencies = [
     "wikipedia>=1.4.0",
     "yfinance>=1.2.0",
 ]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning:deepeval",
+]

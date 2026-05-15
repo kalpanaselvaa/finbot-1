@@ -1,10 +1,8 @@
-import os
 import sqlite3
 from pathlib import Path
 
-from langchain_openai import AzureChatOpenAI
-from langchain_azure_ai.agents import AgentServiceFactory
-from azure.identity import DefaultAzureCredential
+from langchain_ollama import ChatOllama
+from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.sqlite import SqliteSaver
 from app.config import settings
 from app.tools import tools
@@ -33,37 +31,39 @@ Given a stock ticker or company name, produce a concise, structured analyst brie
 - **Outlook:** 1-2 sentence synthesis, no advice
 """
 
-# ── Azure OpenAI LLM (replaces ChatGroq) ──────────────────
-llm = AzureChatOpenAI(
-    azure_deployment=settings.azure_openai_deployment,
-    azure_endpoint=settings.azure_openai_endpoint,
-    api_key=settings.azure_openai_api_key,
-    api_version=settings.azure_openai_api_version,
-    temperature=0,
-    max_retries=2,
-)
+# Lazily-initialised singleton — nothing runs at import time.
+_agent = None
 
-# ── SQLite checkpointer (unchanged) ───────────────────────
-Path(settings.sqlite_db_path).parent.mkdir(parents=True, exist_ok=True)
-conn = sqlite3.connect(settings.sqlite_db_path, check_same_thread=False)
-checkpointer = SqliteSaver(conn)
 
-# ── Azure AI Foundry Agent Factory ────────────────────────
-factory = AgentServiceFactory(
-    project_endpoint=settings.azure_ai_project_endpoint,
-    credential=DefaultAzureCredential(),
-)
+def _get_agent():
+    global _agent
 
-# ── Register agent in Foundry ──────────────────────────────
-agent = factory.create_prompt_agent(
-    name="finbot-assistant",
-    model=settings.azure_openai_deployment,
-    instructions=SYSTEM_PROMPT,
-    tools=tools,
-)
+    if _agent is not None:
+        return _agent
+
+    # ── SQLite checkpointer ────────────────────────────────
+    db_path = Path(settings.sqlite_db_path)
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(db_path), check_same_thread=False)
+    checkpointer = SqliteSaver(conn)
+
+    # ── Ollama local LLM ──────────────────────────────────
+    llm = ChatOllama(model="llama3.2", temperature=0)
+
+    # ── LangGraph ReAct agent ──────────────────────────────
+    _agent = create_react_agent(
+        model=llm,
+        tools=tools,
+        prompt=SYSTEM_PROMPT,
+        checkpointer=checkpointer,
+    )
+
+    return _agent
 
 
 def run_agent(query: str, thread_id: str) -> str:
+    agent = _get_agent()
+
     response = agent.invoke(
         {"messages": [{"role": "user", "content": query}]},
         config={"configurable": {"thread_id": thread_id}},

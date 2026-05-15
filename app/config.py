@@ -11,11 +11,14 @@ class Settings(BaseSettings):
     # ── Azure AI Project (Foundry) ────────────────────────
     azure_ai_project_endpoint: str = ""
 
+    # ── Azure Content Safety ──────────────────────────────
+    azure_content_safety_endpoint: str = ""
+
     # ── SerpAPI (unchanged) ───────────────────────────────
     serpapi_api_key: str = ""
 
     # ── SQLite (unchanged) ────────────────────────────────
-    sqlite_db_path: str = ".data/finance_agent.db"
+    sqlite_db_path: str = "/tmp/finance_agent.db"
 
     model_config = SettingsConfigDict(
         env_file=".env",
