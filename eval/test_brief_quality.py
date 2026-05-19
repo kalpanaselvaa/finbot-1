@@ -67,11 +67,13 @@ relevancy_metric = GEval(
         "It must contain: Fundamentals (price, P/E, market cap), "
         "a Valuation Signal (OVERVALUED/FAIRLY VALUED/UNDERVALUED with reason), "
         "News Sentiment (bullish/neutral/bearish), Key Risks (at least one bullet), "
-        "and an Outlook. Numbers must be present. No buy/sell advice."
+        "and an Outlook. Numbers must be present. At least one percentage value "
+        "(e.g. revenue growth, margin) must appear formatted as X%. No buy/sell advice."
     ),
     evaluation_steps=[
         "Check all five required sections are present.",
         "Verify at least one numeric value appears in Fundamentals.",
+        "Verify at least one percentage value (matching pattern like '16.60%') is present.",
         "Confirm Valuation Signal is one of the three valid labels.",
         "Confirm no explicit buy or sell recommendation is made.",
         "Score 1 if all checks pass, 0 otherwise.",
@@ -103,6 +105,14 @@ def assert_no_advice(brief: str):
         )
 
 
+def assert_percentage_values(brief: str, ticker: str):
+    """Fundamentals must contain at least one percentage value (e.g. 16.60%)."""
+    assert re.search(r"\d+\.?\d*\s*%", brief), (
+        f"Brief for {ticker} contains no percentage values — "
+        "expected revenue growth, margin, or similar metric as X%"
+    )
+
+
 # ── Structural tests (fast, no LLM judge) ───────────────────────────────────
 
 @pytest.mark.parametrize("ticker", TICKERS)
@@ -121,6 +131,12 @@ def test_brief_contains_no_advice(ticker):
 def test_brief_mentions_ticker(ticker):
     brief = call_brief(ticker, _tid(f"ticker-{ticker.lower()}"))
     assert ticker in brief, f"Ticker '{ticker}' not mentioned in its own brief"
+
+
+@pytest.mark.parametrize("ticker", TICKERS)
+def test_brief_contains_percentage_values(ticker):
+    brief = call_brief(ticker, _tid(f"pct-{ticker.lower()}"))
+    assert_percentage_values(brief, ticker)
 
 
 # ── LLM-judge quality test ────────────────────────────────────────────────

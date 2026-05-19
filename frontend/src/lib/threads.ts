@@ -1,10 +1,18 @@
 import { v4 as uuidv4 } from "uuid";
 
+export interface EvalCheck {
+  name: string;
+  passed: boolean;
+  detail: string;
+}
+
 export interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   createdAt: number;
+  evalChecks?: EvalCheck[];
+  evalPct?: number;
 }
 
 export interface Thread {
@@ -50,6 +58,15 @@ export function createThread(): Thread {
   save(threads);
   setActiveThreadId(thread.id);
   return thread;
+}
+
+export function updateMessageEval(threadId: string, messageId: string, evalChecks: EvalCheck[], evalPct: number): void {
+  const threads = load();
+  const idx = threads.findIndex((t) => t.id === threadId);
+  if (idx === -1) return;
+  const msg = threads[idx].messages.find((m) => m.id === messageId);
+  if (msg) { msg.evalChecks = evalChecks; msg.evalPct = evalPct; }
+  save(threads);
 }
 
 export function addMessage(threadId: string, message: Omit<Message, "id" | "createdAt">): Message {

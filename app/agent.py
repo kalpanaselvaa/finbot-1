@@ -20,6 +20,7 @@ Given a stock ticker or company name, produce a concise, structured analyst brie
 3. Never fabricate prices, ratios, or news.
 4. Always follow the output format.
 5. Flag notable risks or red flags.
+6. Format ratio fields (revenue_growth, profit_margin, gross_margin) as percentages: multiply by 100 and append % (e.g. 0.066 → 6.60%).
 
 ## Output Format
 

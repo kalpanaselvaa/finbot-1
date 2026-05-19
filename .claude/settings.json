@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/kalpanaselvaa/Documents/GitHub/cb-finbot status)",
+      "Bash(git -C /Users/kalpanaselvaa/Documents/GitHub/cb-finbot log --oneline -5)"
+    ]
+  }
+}

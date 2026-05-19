@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Message } from "@/lib/threads";
 import { cn } from "@/lib/utils";
-import { TrendingUp, User } from "lucide-react";
+import { TrendingUp, User, CheckCircle2, XCircle } from "lucide-react";
 
 interface ChatMessageProps {
   message: Message;
@@ -39,9 +39,43 @@ export function ChatMessage({ message }: ChatMessageProps) {
         {isUser ? (
           <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
         ) : (
-          <div className="prose prose-sm dark:prose-invert max-w-none leading-relaxed [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
-          </div>
+          <>
+            <div className="prose prose-sm dark:prose-invert max-w-none leading-relaxed [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+            </div>
+            {message.evalChecks && message.evalChecks.length > 0 && (
+              <div className="mt-3 border-t border-border/50 pt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-muted-foreground">Eval checks</span>
+                  <span className={cn(
+                    "text-xs font-semibold tabular-nums",
+                    message.evalPct === 100 ? "text-green-400" : "text-yellow-400"
+                  )}>
+                    {message.evalPct}%
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {message.evalChecks.map((c, i) => (
+                    <span
+                      key={i}
+                      title={c.detail}
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs",
+                        c.passed
+                          ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                          : "bg-red-500/10 text-red-400 border border-red-500/20"
+                      )}
+                    >
+                      {c.passed
+                        ? <CheckCircle2 className="h-3 w-3" />
+                        : <XCircle className="h-3 w-3" />}
+                      {c.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

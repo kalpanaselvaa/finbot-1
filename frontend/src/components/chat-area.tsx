@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Thread, Message, addMessage } from "@/lib/threads";
-import { fetchBrief } from "@/lib/api";
+import { Thread, Message, addMessage, updateMessageEval } from "@/lib/threads";
+import { fetchBrief, checkEval } from "@/lib/api";
 import { ChatMessage, TypingIndicator } from "@/components/chat-message";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Send, BarChart2 } from "lucide-react";
@@ -66,6 +66,18 @@ export function ChatArea({ thread, onMessagesUpdated }: ChatAreaProps) {
         const assistantMsg = addMessage(thread.id, { role: "assistant", content: result });
         setMessages((prev) => [...prev, assistantMsg]);
         onMessagesUpdated();
+
+        // Run inline eval checks (non-blocking)
+        checkEval(query, result).then((evalResult) => {
+          updateMessageEval(thread.id, assistantMsg.id, evalResult.checks, evalResult.percentage);
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMsg.id
+                ? { ...m, evalChecks: evalResult.checks, evalPct: evalResult.percentage }
+                : m
+            )
+          );
+        }).catch(() => {/* silently ignore eval errors */});
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error");
       } finally {

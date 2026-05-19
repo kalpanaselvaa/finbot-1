@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Thread } from "@/lib/threads";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { MessageSquarePlus, TrendingUp, MessageSquare, Trash2 } from "lucide-react";
+import { MessageSquarePlus, TrendingUp, MessageSquare, Trash2, FlaskConical } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
@@ -16,6 +18,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ threads, activeThreadId, onNewChat, onSelectThread, onDeleteThread }: SidebarProps) {
+  const pathname = usePathname();
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-card">
       {/* Header */}
@@ -43,6 +46,22 @@ export function Sidebar({ threads, activeThreadId, onNewChat, onSelectThread, on
           New Chat
         </Button>
       </div>
+
+      {/* Evals Link */}
+      <div className="px-3 pb-2">
+        <Link href="/evals">
+          <Button
+            variant={pathname === "/evals" ? "secondary" : "ghost"}
+            size="sm"
+            className="w-full justify-start gap-2"
+          >
+            <FlaskConical className="h-4 w-4" />
+            Evals
+          </Button>
+        </Link>
+      </div>
+
+      <Separator />
 
       {/* Thread List */}
       <ScrollArea className="flex-1 px-2">
